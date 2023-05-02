@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"call-ms-users/database"
+	"call-ms-users/helpers"
 	"call-ms-users/models"
-	"fmt"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,19 +12,24 @@ import (
 func PostUser(ctx *fiber.Ctx) error {
 
 	collection := database.DBConn.Database("call-users").Collection("users")
+	user := new(models.User)
+	parseErr := ctx.BodyParser(user)
 
-	// creating a dummy user
-	user := models.User{
-		Id:       1,
-		Username: "Andre",
-		Password: "123",
-		UserType: "admin",
-		IsActive: true,
+	if parseErr != nil {
+		return parseErr
 	}
+
+	hashedPassword, hashErr := helpers.HashPassword(user.Password)
+
+	if hashErr != nil {
+		return hashErr
+	}
+
+	user.Password = hashedPassword
 
 	res, err := collection.InsertOne(ctx.Context(), user)
 
-	fmt.Printf("Inserted id: %v", res.InsertedID)
+	log.Println(res.InsertedID)
 
 	if err != nil {
 		log.Fatal(err)
