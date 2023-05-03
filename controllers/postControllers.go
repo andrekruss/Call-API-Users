@@ -19,6 +19,12 @@ func PostUser(ctx *fiber.Ctx) error {
 		return parseErr
 	}
 
+	validateErr := helpers.Validate.Struct(user)
+
+	if validateErr != nil {
+		return validateErr
+	}
+
 	hashedPassword, hashErr := helpers.HashPassword(user.Password)
 
 	if hashErr != nil {
