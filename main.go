@@ -3,15 +3,12 @@ package main
 import (
 	"call-ms-users/controllers"
 	"call-ms-users/database"
-	"context"
+	"call-ms-users/helpers"
 	"fmt"
-	"log"
-	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func readConfigFile() {
@@ -26,23 +23,6 @@ func readConfigFile() {
 	}
 }
 
-func createMongoClient(connectionString string) *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI(connectionString))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-}
-
-func connectMongo(client *mongo.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err := client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func routesSetup(app *fiber.App) {
 	app.Get("/", controllers.GetRoot)
 	app.Post("/create-user", controllers.PostUser)
@@ -53,9 +33,12 @@ func main() {
 	// sets env variables through viper package
 	readConfigFile()
 
+	// validator
+	helpers.Validate = validator.New()
+
 	// connecting to mongoDB
-	database.DBConn = createMongoClient(viper.GetString("database.connectionstring"))
-	connectMongo(database.DBConn)
+	database.DBConn = database.CreateMongoClient(viper.GetString("database.connectionstring"))
+	database.ConnectMongo(database.DBConn)
 
 	// fiber app
 	app := fiber.New()
