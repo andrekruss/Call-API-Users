@@ -24,13 +24,17 @@ func readConfigFile() {
 }
 
 func routesSetup(app *fiber.App) {
-	app.Get("/", controllers.GetRoot)
 	app.Post(
-		"/create-user",
+		"/users/create-user",
 		controllers.ParseUser,
 		controllers.ValidateUser,
 		controllers.PasswordHash,
 		controllers.SaveUser,
+	)
+	app.Post(
+		"auth/authenticate-user",
+		controllers.ParseUserLoginInfo,
+		controllers.GetUserByUsername,
 	)
 }
 
